@@ -1,0 +1,5 @@
+TODO
+
+* Turn intermolecular collisions on and off
+* Turn intermolecular forces on and off
+* Have some kind of indicator for more/less like ideal gas
