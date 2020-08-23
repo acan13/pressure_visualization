@@ -25,9 +25,9 @@ export const CollisionHelper = {
 
         // use pythagorean theorem to find center distance at closest point
         // don't take square root to avoid processing time
-        const closestCenterDistanceSquared = moleculeCenterDistance ^ 2 - relativeSpeedInDirectionFromMol1ToMol2 ^ 2;
+        const closestCenterDistanceSquared = moleculeCenterDistance ** 2 - relativeSpeedInDirectionFromMol1ToMol2 ** 2;
 
-        const sumMoleculeRadiiSquared = sumMoleculeRadii ^ 2;
+        const sumMoleculeRadiiSquared = sumMoleculeRadii ** 2;
 
         // if the distance at the closest point is greater than or equal to sum of radii then no collision
         if (closestCenterDistanceSquared >= sumMoleculeRadiiSquared) {
@@ -40,10 +40,36 @@ export const CollisionHelper = {
 
         return velocityCollisionRatio;
     },
-    _getRelativeVelocity (mol1, mol2) {
-        const relativeVelocityX = mol1.velocityX - mol2.velocityX;
-        const relativeVelocityY = mol1.velocityY - mol2.velocityY;
-        return [relativeVelocityX, relativeVelocityY];
+    getCollisionVelocities (mol1, mol2, velocityCollisionRatio) {
+        // move the molecules to the point where they collide
+        mol1.velocity.forEach((velocity, index) => {
+            mol1.position[index] += velocity * velocityCollisionRatio;
+        });
+        mol2.velocity.forEach((velocity, index) => {
+            mol2.position[index] += velocity * velocityCollisionRatio;
+        });
+
+        // calculate new velocities
+        const centerToCenterVector = mol2.position.map((val, index) => {
+            return val - mol1.position[index];
+        });
+        const normalizedCenterToCenterVector = this._getNormalizedVector(centerToCenterVector);
+        const a1 = this._getDotProduct(mol1.velocity, normalizedCenterToCenterVector);
+        const a2 = this._getDotProduct(mol2.velocity, normalizedCenterToCenterVector);
+        const P = (2 * (a1 - a2)) / (mol1.mass + mol2.mass);
+        const newV1 = mol1.velocity.map((val, index) => {
+            return val - P * mol2.mass * normalizedCenterToCenterVector[index];
+        });
+        const newV2 = mol2.velocity.map((val, index) => {
+            return val - P * mol1.mass * normalizedCenterToCenterVector[index];
+        });
+
+        return [newV1, newV2];
+    },
+    _getRelativeVelocity (v1, v2 = [0,0,0]) {
+        return v1.map((val, index) => {
+            return val - v2[index];
+        });
     },
     _getDotProduct (v1, v2) {
         let sum = 0;
@@ -55,7 +81,7 @@ export const CollisionHelper = {
     _getDistance (p1, p2 = [0, 0, 0]) {
         let sumSquares = 0;
         for (let i = 0; i < p1.length; i++) {
-            sumSquares += (p2[i] - p1[i]) ^ 2;
+            sumSquares += (p2[i] - p1[i]) ** 2;
         }
         return Math.sqrt(sumSquares);
     },

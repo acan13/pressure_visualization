@@ -8,6 +8,7 @@
 <script>
 import { Molecule } from '../models/Molecule';
 import { Container } from '../models/Container';
+import { CollisionHelper } from '../helpers/collisionHelper';
 export default {
     props: {
         container: {
@@ -24,8 +25,8 @@ export default {
     computed: {
         moleculeStyle1 () {
             return {
-                left: `${this.m1.x}px`,
-                top: `${this.m1.y}px`,
+                left: `${this.m1.position[0]}px`,
+                top: `${this.m1.position[1]}px`,
                 'border-width': '5px',
                 'border-color': 'blue',
                 'border-style': 'solid',
@@ -34,8 +35,8 @@ export default {
         },
         moleculeStyle2 () {
             return {
-                left: `${this.m2.x}px`,
-                top: `${this.m2.y}px`,
+                left: `${this.m2.position[0]}px`,
+                top: `${this.m2.position[1]}px`,
                 'border-width': '5px',
                 'border-color': 'red',
                 'border-style': 'solid',
@@ -44,24 +45,18 @@ export default {
         },
     },
     mounted () {
+        const vm = this;
         setInterval(() => {
-            this.m1.x += this.m1.velocityX;
-            this.m1.y += this.m1.velocityY;
-            if (this.m1.x >= this.container.width - this.m1.radius * 2 || this.m1.x <= 0) {
-                this.m1.velocityX *= -1;
+            const collisionVelocityRatio = CollisionHelper.getVelocityCollisionRatio(vm.m1, vm.m2);
+            if (collisionVelocityRatio === -1) {
+                vm.$set(vm.m1.position, 0, vm.m1.position[0] + vm.m1.velocity[0]);
+                vm.$set(vm.m1.position, 1, vm.m1.position[1] + vm.m1.velocity[1]);
+                vm.$set(vm.m2.position, 0, vm.m2.position[0] + vm.m2.velocity[0]);
+                vm.$set(vm.m2.position, 1, vm.m2.position[1] + vm.m2.velocity[1]);
+            } else {
+                console.log("intersection")
             }
-            if (this.m1.y >= this.container.height - this.m1.radius * 2 || this.m1.y <= 0) {
-                this.m1.velocityY *= -1;
-            }
-            this.m2.x += this.m2.velocityX;
-            this.m2.y += this.m2.velocityY;
-            if (this.m2.x >= this.container.width - this.m2.radius * 2 || this.m2.x <= 0) {
-                this.m2.velocityX *= -1;
-            }
-            if (this.m2.y >= this.container.height - this.m2.radius * 2 || this.m2.y <= 0) {
-                this.m2.velocityY *= -1;
-            }
-        }, 0);
+        }, 500);
     },
 };
 </script>

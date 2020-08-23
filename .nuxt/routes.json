@@ -3,7 +3,6 @@
     "name": "index",
     "path": "/",
     "component": "/Users/Allan/Desktop/Projects/pressure_visualization/pages/index.vue",
-    "chunkName": "pages/index",
-    "_name": "_bfba774a"
+    "chunkName": "pages/index"
   }
 ]
