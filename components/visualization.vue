@@ -18,15 +18,15 @@ export default {
     },
     data () {
         return {
-            m1: new Molecule(1, 50, 50, 0.4, 0.2, 5),
-            m2: new Molecule(1, 20, 20, 0.3, 0.4, 5),
+            m1: new Molecule(1, 50, 20, -0.5, 0, 5),
+            m2: new Molecule(1, 20, 20, 0.5, 0, 5),
         };
     },
     computed: {
         moleculeStyle1 () {
             return {
-                left: `${this.m1.position[0]}px`,
-                top: `${this.m1.position[1]}px`,
+                left: `${this.m1.position[0] - this.m1.radius}px`,
+                top: `${this.m1.position[1] - this.m2.radius}px`,
                 'border-width': '5px',
                 'border-color': 'blue',
                 'border-style': 'solid',
@@ -35,8 +35,8 @@ export default {
         },
         moleculeStyle2 () {
             return {
-                left: `${this.m2.position[0]}px`,
-                top: `${this.m2.position[1]}px`,
+                left: `${this.m2.position[0] - this.m2.radius}px`,
+                top: `${this.m2.position[1] - this.m2.radius}px`,
                 'border-width': '5px',
                 'border-color': 'red',
                 'border-style': 'solid',
@@ -45,18 +45,13 @@ export default {
         },
     },
     mounted () {
-        const vm = this;
+        const m1 = new Molecule(1, 50, 20, -0.5, 0.5, 5, 'red');
+        const m2 = new Molecule(1, 20, 20, 0.5, -0.2, 5, 'blue');
         setInterval(() => {
-            const collisionVelocityRatio = CollisionHelper.getVelocityCollisionRatio(vm.m1, vm.m2);
-            if (collisionVelocityRatio === -1) {
-                vm.$set(vm.m1.position, 0, vm.m1.position[0] + vm.m1.velocity[0]);
-                vm.$set(vm.m1.position, 1, vm.m1.position[1] + vm.m1.velocity[1]);
-                vm.$set(vm.m2.position, 0, vm.m2.position[0] + vm.m2.velocity[0]);
-                vm.$set(vm.m2.position, 1, vm.m2.position[1] + vm.m2.velocity[1]);
-            } else {
-                console.log("intersection")
-            }
-        }, 500);
+            this.m1 = new Molecule(m1.mass, m1.position[0], m1.position[1], m1.velocity[0], m1.velocity[1], m1.radius, m1.color);
+            this.m2 = new Molecule(m2.mass, m2.position[0], m2.position[1], m2.velocity[0], m2.velocity[1], m2.radius, m2.color);
+            CollisionHelper.updateMoleculesToNextPosition([m1, m2], this.container);
+        }, 0);
     },
 };
 </script>
