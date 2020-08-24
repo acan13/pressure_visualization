@@ -36,10 +36,7 @@ export default {
     },
     mounted () {
         const molecules = [
-            new Molecule(1, 50, 20, -0.5, 0.5, 5, 'red'),
-            new Molecule(1, 20, 20, 0.5, -0.2, 5, 'blue'),
-            new Molecule(10, 20, 50, 0.5, -0.2, 5, 'green'),
-            new Molecule(10, 40, 10, 0.5, -0.2, 10, 'orange'),
+            new Molecule(5, 5, 5, 0.3, 0.5, 5, 'red'),
         ];
         molecules.forEach((mol, index) => {
             this.molecules.push(new Molecule(mol.mass, mol.position[0], mol.position[1], mol.velocity[0], mol.velocity[1], mol.radius, mol.color));
