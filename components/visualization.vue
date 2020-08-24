@@ -36,14 +36,70 @@ export default {
     },
     mounted () {
         const molecules = [
-            new Molecule(5, 5, 5, 0.3, 0.5, 5, 'red'),
+            new Molecule({
+                mass: 32,
+                positionX: 100,
+                positionY: 100,
+                radius: 5,
+                color: 'red',
+            }),
+            new Molecule({
+                mass: 32,
+                positionX: 200,
+                positionY: 200,
+                radius: 5,
+                color: 'green',
+            }),
+            new Molecule({
+                mass: 32,
+                positionX: 250,
+                positionY: 250,
+                radius: 5,
+                color: 'yellow',
+            }),
+            new Molecule({
+                mass: 32,
+                positionX: 270,
+                positionY: 270,
+                radius: 5,
+                color: 'orange',
+            }),
+            new Molecule({
+                mass: 32,
+                positionX: 280,
+                positionY: 280,
+                radius: 5,
+                color: 'purple',
+            }),
+            new Molecule({
+                mass: 32,
+                positionX: 290,
+                positionY: 290,
+                radius: 5,
+                color: 'lawngreen',
+            }),
+            new Molecule({
+                mass: 32,
+                positionX: 20,
+                positionY: 20,
+                radius: 5,
+                color: 'lightblue',
+            }),
+            new Molecule({
+                mass: 32,
+                positionX: 30,
+                positionY: 30,
+                radius: 7,
+                color: 'grey',
+            }),
         ];
+        console.log(molecules[0]);
         molecules.forEach((mol, index) => {
-            this.molecules.push(new Molecule(mol.mass, mol.position[0], mol.position[1], mol.velocity[0], mol.velocity[1], mol.radius, mol.color));
+            this.molecules.push(new Molecule({ mass: mol.mass, positionX: mol.position[0], positionY: mol.position[1], radius: mol.radius, color: mol.color, velocityX: mol.velocity[0], velocityY: mol.velocity[1] }));
         });
         setInterval(() => {
             molecules.forEach((mol, index) => {
-                this.$set(this.molecules, index, new Molecule(mol.mass, mol.position[0], mol.position[1], mol.velocity[0], mol.velocity[1], mol.radius, mol.color));
+                this.$set(this.molecules, index, new Molecule({ mass: mol.mass, positionX: mol.position[0], positionY: mol.position[1], radius: mol.radius, color: mol.color, velocityX: mol.velocity[0], velocityY: mol.velocity[1] }));
             });
             CollisionHelper.updateMoleculesToNextPosition(molecules, this.container);
         }, 0);
