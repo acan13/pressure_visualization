@@ -1,5 +1,8 @@
 import { IDEAL_GAS_CONSTANT } from '../constants';
 
+// explanation here
+// https://courses.lumenlearning.com/boundless-chemistry/chapter/kinetic-molecular-theory/
+
 export const MolecularVelocityHelper = {
     // root mean squared velocity
     // average velocity of all molecules

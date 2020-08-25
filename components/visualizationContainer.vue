@@ -13,7 +13,7 @@ export default {
     },
     data () {
         return {
-            container: new Container(300, 300),
+            container: new Container(400, 400),
         };
     },
     computed: {

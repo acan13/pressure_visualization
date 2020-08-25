@@ -44,6 +44,7 @@ export const CollisionHelper = {
             });
             timeElapsed += firstCollisionTime;
         }
+        container.secondsElapsed++;
         return molecules;
     },
     _getTimeToWallCollision (mol, container, time = 1) {
@@ -138,9 +139,11 @@ export const CollisionHelper = {
     },
     _updateVelocityFromWallCollision (mol, container) {
         if (mol.position[0] <= mol.radius || mol.position[0] >= container.width - mol.radius) {
+            container.totalTransferredEnergy += Math.abs(mol.velocity[0]) * mol.mass * 1000; // kg * m / s
             mol.velocity[0] *= -1;
         }
         if (mol.position[1] <= mol.radius || mol.position[1] >= container.height - mol.radius) {
+            container.totalTransferredEnergy += Math.abs(mol.velocity[1]) * mol.mass * 1000; // kg * m / s
             mol.velocity[1] *= -1;
         }
     },

@@ -7,7 +7,7 @@ export class Molecule {
         positionY, // km
         radius, // px
         color,
-        temp = 273, // K
+        temp = 298, // K
         velocityX, // km / s
         velocityY, // km / s
     }) {
