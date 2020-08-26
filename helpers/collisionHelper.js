@@ -3,38 +3,50 @@
 
 export const CollisionHelper = {
     updateMoleculesToNextPosition (molecules, container) {
-        let collisions = [];
-        let wallCollisions = [];
         let timeElapsed = 0;
+        const infiniteStopNum = 100;
+        let infiniteStopCount = 0;
         while (timeElapsed < 1) {
-            let firstCollisionTime = 1;
+            let collisions = [];
+            let wallCollisions = [];
+            const timeRemaining = 1 - timeElapsed;
+            infiniteStopCount++;
+            if (infiniteStopCount === infiniteStopNum) {
+                // console.log('infinite loop');
+                // console.log('time elapsed ' + timeElapsed);
+                // console.log(molecules);
+                // console.log(container);
+                return molecules;
+            }
+            let minTimeStep = timeRemaining;
             for (let i = 0; i < molecules.length; i++) {
                 const molecule1 = molecules[i];
-                const wallCollisionTime = this._getTimeToWallCollision(molecule1, container, 1 - timeElapsed);
-                if (wallCollisionTime === -1) {
+                const wallCollisionTime = this._getTimeToWallCollision(molecule1, container, timeRemaining);
+                if (wallCollisionTime <= 0) {
                     // nothing
-                } else if (wallCollisionTime < firstCollisionTime) {
-                    firstCollisionTime = wallCollisionTime;
+                } else if (wallCollisionTime < minTimeStep) {
+                    minTimeStep = wallCollisionTime;
                     wallCollisions = [molecule1];
                     collisions = [];
-                } else if (wallCollisionTime === firstCollisionTime) {
+                } else if (wallCollisionTime === minTimeStep) {
                     wallCollisions.push(molecule1);
                 }
                 for (let j = i + 1; j < molecules.length; j++) {
                     const molecule2 = molecules[j];
-                    const collisionTime = this._getTimeToCollision(molecule1, molecule2, 1 - timeElapsed);
-                    if (collisionTime === -1) {
+                    const collisionTime = this._getTimeToCollision(molecule1, molecule2, timeRemaining);
+                    if (collisionTime <= 0) {
                         // nothing
-                    } else if (collisionTime < firstCollisionTime) {
+                    } else if (collisionTime < minTimeStep) {
+                        minTimeStep = collisionTime;
                         wallCollisions = [];
                         collisions = [[molecule1, molecule2]];
-                    } else if (collisionTime === firstCollisionTime) {
+                    } else if (collisionTime === minTimeStep) {
                         collisions.push([molecule1, molecule2]);
                     }
                 }
             }
             molecules.forEach((molecule) => {
-                this._moveMolecule(molecule, firstCollisionTime);
+                this._moveMolecule(molecule, minTimeStep);
             });
             wallCollisions.forEach((molecule) => {
                 this._updateVelocityFromWallCollision(molecule, container);
@@ -42,39 +54,39 @@ export const CollisionHelper = {
             collisions.forEach(([mol1, mol2]) => {
                 this._updateMoleculeVelocitiesFromCollision(mol1, mol2);
             });
-            timeElapsed += firstCollisionTime;
+            timeElapsed += minTimeStep;
         }
         container.secondsElapsed++;
         return molecules;
     },
-    _getTimeToWallCollision (mol, container, time = 1) {
+    _getTimeToWallCollision (mol, container, maxTime = 1) {
         let soonestCollision = -1;
-        const nextXPosition = mol.position[0] + mol.velocity[0] * time;
+        const nextXPosition = mol.position[0] + mol.velocity[0] * maxTime;
         if (nextXPosition < mol.radius) {
-            const distancePastBounce = nextXPosition - mol.radius;
-            const timeToCollision = (mol.velocity[0] * time - distancePastBounce) / (mol.velocity[0] * time);
+            const distanceToBounce = mol.position[0] - mol.radius;
+            const timeToCollision = distanceToBounce / Math.abs(mol.velocity[0]);
             if (soonestCollision === -1 || timeToCollision < soonestCollision) {
                 soonestCollision = timeToCollision;
             }
         }
         if (nextXPosition > container.width - mol.radius) {
-            const distancePastBounce = nextXPosition - container.width + mol.radius;
-            const timeToCollision = (mol.velocity[0] * time - distancePastBounce) / (mol.velocity[0] * time);
+            const distanceToBounce = container.width - mol.radius - mol.position[0];
+            const timeToCollision = distanceToBounce / mol.velocity[0];
             if (soonestCollision === -1 || timeToCollision < soonestCollision) {
                 soonestCollision = timeToCollision;
             }
         }
-        const nextYPosition = mol.position[1] + mol.velocity[1] * time;
+        const nextYPosition = mol.position[1] + mol.velocity[1] * maxTime;
         if (nextYPosition < mol.radius) {
-            const distancePastBounce = nextYPosition - mol.radius;
-            const timeToCollision = (mol.velocity[1] * time - distancePastBounce) / (mol.velocity[1] * time);
+            const distanceToBounce = mol.position[1] - mol.radius;
+            const timeToCollision = distanceToBounce / Math.abs(mol.velocity[1]);
             if (soonestCollision === -1 || timeToCollision < soonestCollision) {
                 soonestCollision = timeToCollision;
             }
         }
         if (nextYPosition > container.height - mol.radius) {
-            const distancePastBounce = nextYPosition - container.height + mol.radius;
-            const timeToCollision = (mol.velocity[1] * time - distancePastBounce) / (mol.velocity[1] * time);
+            const distanceToBounce = container.height - mol.radius - mol.position[1];
+            const timeToCollision = distanceToBounce / mol.velocity[1];
             if (soonestCollision === -1 || timeToCollision < soonestCollision) {
                 soonestCollision = timeToCollision;
             }
@@ -82,43 +94,47 @@ export const CollisionHelper = {
         return soonestCollision;
     },
     _getTimeToCollision (mol1, mol2, time = 1) {
+        // Early Escape test: if the length of the movevec is less
+        // than distance between the centers of these circles minus
+        // their radii, there's no way they can hit.
         const moleculeCenterDistance = this._getDistance(mol1.position, mol2.position);
         const sumMoleculeRadii = mol1.radius + mol2.radius;
         const relativeVelocity = this._getRelativeVelocity(mol1.velocity, mol2.velocity).map((val) => {
             return val * time;
         });
-        const relativeMoveDistance = this._getDistance(relativeVelocity);
-
-        // if distance traveled is less than distance apart minus sum of radii then no collision can occur
-        if (relativeMoveDistance < moleculeCenterDistance - sumMoleculeRadii) {
+        const relativeTravelDistance = this._getDistance(relativeVelocity);
+        // if molecules not travelling far enough to collide
+        if (relativeTravelDistance < moleculeCenterDistance - sumMoleculeRadii) {
             return -1;
         }
 
-        const vectorFromMol1ToMol2 = mol2.position.map((val, index) => {
+        const normalizedRelativeVelocity = this._getNormalizedVector(relativeVelocity);
+        const centerToCenterVector = mol2.position.map((val, index) => {
             return val - mol1.position[index];
         });
-        const relativeSpeedInDirectionFromMol1ToMol2 = this._getDotProduct(relativeVelocity, vectorFromMol1ToMol2);
-
-        // if relativeSpeedInDirectionFromMol1ToMol2 is negative or 0 then the molecules are not moving towards each other
-        if (relativeSpeedInDirectionFromMol1ToMol2 <= 0) {
+        const distanceToClosestPoint = this._getDotProduct(normalizedRelativeVelocity, centerToCenterVector);
+        // if molecules not travelling in the right direction to collide
+        if (distanceToClosestPoint <= 0) {
             return -1;
         }
 
-        // use pythagorean theorem to find center distance at closest point
-        // don't take square root to avoid processing time
-        const closestCenterDistanceSquared = moleculeCenterDistance ** 2 - relativeSpeedInDirectionFromMol1ToMol2 ** 2;
-
+        const distanceAtShortestPointSquared = (moleculeCenterDistance ** 2) - (distanceToClosestPoint ** 2);
         const sumMoleculeRadiiSquared = sumMoleculeRadii ** 2;
-
-        // if the distance at the closest point is greater than or equal to sum of radii then no collision
-        if (closestCenterDistanceSquared >= sumMoleculeRadiiSquared) {
+        if (distanceAtShortestPointSquared >= sumMoleculeRadiiSquared) {
             return -1;
         }
 
-        const intersectionDistanceOffsetSquared = sumMoleculeRadiiSquared - closestCenterDistanceSquared;
-        const relativeDistanceToCollision = relativeSpeedInDirectionFromMol1ToMol2 - Math.sqrt(intersectionDistanceOffsetSquared);
-        const timeToCollision = relativeDistanceToCollision / relativeSpeedInDirectionFromMol1ToMol2;
+        const offsetSquared = sumMoleculeRadiiSquared - distanceAtShortestPointSquared;
+        if (offsetSquared < 0) {
+            return -1;
+        }
 
+        const distanceToCollision = distanceToClosestPoint - Math.sqrt(offsetSquared);
+        if (distanceToCollision > relativeTravelDistance) {
+            return -1;
+        }
+
+        const timeToCollision = distanceToCollision / relativeTravelDistance;
         return timeToCollision;
     },
     _updateMoleculeVelocitiesFromCollision (mol1, mol2) {
@@ -174,7 +190,7 @@ export const CollisionHelper = {
     _getNormalizedVector (vector, length = 0) {
         length = length || this._getDistance(vector);
         return vector.map((val) => {
-            return val / length;
+            return val / Math.abs(length);
         });
     },
 };
