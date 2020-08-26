@@ -79,7 +79,7 @@ export default {
                 this.$set(this.molecules, index, new Molecule({ mass: mol.mass, positionX: mol.position[0], positionY: mol.position[1], radius: mol.radius, color: mol.color, velocityX: mol.velocity[0], velocityY: mol.velocity[1] }));
             });
             CollisionHelper.updateMoleculesToNextPosition(molecules, this.container);
-        }, 0);
+        }, 1 * 1000);
     },
 };
 </script>
